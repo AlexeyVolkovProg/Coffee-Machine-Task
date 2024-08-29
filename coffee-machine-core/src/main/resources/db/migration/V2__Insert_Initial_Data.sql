@@ -1,7 +1,7 @@
 -- Вставка начальных данных в таблицу ingredient в схеме coffee_machine
 INSERT INTO coffee_machine.ingredient (name, quantity) VALUES ('Coffee Beans', 1000);
-INSERT INTO coffee_machine.ingredient (name, quantity) VALUES ('Water', 2000);
-INSERT INTO coffee_machine.ingredient (name, quantity) VALUES ('Milk', 500);
+INSERT INTO coffee_machine.ingredient (name, quantity) VALUES ('Water', 100);
+INSERT INTO coffee_machine.ingredient (name, quantity) VALUES ('Milk', 100);
 
 -- Вставка начальных данных в таблицу recipe в схеме coffee_machine
 INSERT INTO coffee_machine.recipe (name) VALUES ('Espresso');

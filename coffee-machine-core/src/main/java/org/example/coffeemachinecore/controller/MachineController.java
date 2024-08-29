@@ -1,18 +1,13 @@
 package org.example.coffeemachinecore.controller;
 
+import org.example.coffeemachinecore.model.Ingredient;
 import org.example.coffeemachinecore.service.CoffeeMachineService;
 import org.example.dto.request.AddIngredientRequest;
 import org.example.dto.request.AddReceiptRequest;
-import org.example.dto.response.IngredientListResponse;
-import org.example.dto.response.IngredientResponse;
-import org.example.dto.response.ReceiptListResponse;
-import org.example.dto.response.ReceiptResponse;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.example.dto.response.*;
+import org.springframework.web.bind.annotation.*;
 
-@Controller
+@RestController
 public class MachineController {
     private final CoffeeMachineService coffeeMachineService;
 
@@ -32,7 +27,6 @@ public class MachineController {
         return coffeeMachineService.addIngredient(ingredientDto);
     }
 
-    // Новый метод для получения списка всех рецептов
     @GetMapping("/recipes")
     public ReceiptListResponse getAllRecipes() {
         return coffeeMachineService.getAllRecipes();
@@ -44,4 +38,21 @@ public class MachineController {
         return coffeeMachineService.getAllIngredients();
     }
 
+
+
+    @PostMapping("/prepareDrink")
+    public InfoDTO prepareDrink(@RequestParam String drinkName) {
+        return coffeeMachineService.prepareDrink(drinkName);
+    }
+
+
+    @PatchMapping("/updateIngredient")
+    public InfoDTO updateIngredientQuantity(@RequestBody AddIngredientRequest ingredient) {
+        return coffeeMachineService.updateIngredientQuantity(ingredient);
+    }
+
+    @GetMapping("/mostPopularBeverage")
+    public InfoDTO getMostPopularBeverage() {
+        return coffeeMachineService.getMostPopularBeverage();
+    }
 }

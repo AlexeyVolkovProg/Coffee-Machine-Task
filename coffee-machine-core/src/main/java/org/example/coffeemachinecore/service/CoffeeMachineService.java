@@ -1,40 +1,47 @@
 package org.example.coffeemachinecore.service;
 
+import org.example.coffeemachinecore.exceptions.DuplicateNameException;
+import org.example.coffeemachinecore.exceptions.IngredientNotFoundException;
+import org.example.coffeemachinecore.exceptions.InsufficientIngredientException;
+import org.example.coffeemachinecore.exceptions.RecipeNotFoundException;
+import org.example.coffeemachinecore.model.BeverageStatistics;
 import org.example.coffeemachinecore.model.Ingredient;
 import org.example.coffeemachinecore.model.Recipe;
+import org.example.coffeemachinecore.repository.BeverageStatisticsRepository;
 import org.example.coffeemachinecore.repository.IngredientRepository;
 import org.example.coffeemachinecore.repository.RecipeRepository;
 import org.example.dto.request.AddIngredientRequest;
 import org.example.dto.request.AddReceiptRequest;
 import org.example.dto.request.IngredientQuantityDto;
-import org.example.dto.response.IngredientListResponse;
-import org.example.dto.response.IngredientResponse;
-import org.example.dto.response.ReceiptListResponse;
-import org.example.dto.response.ReceiptResponse;
+import org.example.dto.response.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 @Service
 public class CoffeeMachineService {
     private final IngredientRepository ingredientRepository;
 
     private final RecipeRepository recipeRepository;
 
+    private final BeverageStatisticsRepository beverageStatisticsRepository;
 
-    public CoffeeMachineService(IngredientRepository ingredientRepository, RecipeRepository recipeRepository) {
+
+    public CoffeeMachineService(IngredientRepository ingredientRepository, RecipeRepository recipeRepository, BeverageStatisticsRepository beverageStatisticsRepository) {
         this.ingredientRepository = ingredientRepository;
         this.recipeRepository = recipeRepository;
+        this.beverageStatisticsRepository = beverageStatisticsRepository;
     }
 
     /**
      * Метод приготовления напитка
      */
-    public String prepareDrink(String drinkName) {
+    public InfoDTO prepareDrink(String drinkName) {
         Recipe recipe = recipeRepository.findByName(drinkName);
         if (recipe == null) {
-            throw new RuntimeException("Recipe not found");
+            throw new RecipeNotFoundException(drinkName);
         }
 
         Map<String, Integer> recipeIngredients = recipe.getIngredients(); // достаем информацию о нужных ингредиентах и их кол-ве
@@ -44,28 +51,33 @@ public class CoffeeMachineService {
 
             Ingredient ingredient = ingredientRepository.findByName(ingredientName);
 
-            if (ingredient == null || ingredient.getQuantity() < requiredQuantity) { // проверка на наличие ингредиентов и их нужного кол-ва
-                return "Not enough " + (ingredient != null ? ingredientName : "unknown ingredient");
+            if (ingredient == null ) { // проверка на наличие ингредиентов и их нужного кол-ва
+               throw new IngredientNotFoundException(ingredientName);
             }
 
+            if(ingredient.getQuantity() < requiredQuantity){
+                throw new InsufficientIngredientException(ingredientName);
+            }
+
+            updateStatistics(recipe); // обновляем статистику заказов по данному рецепту
             ingredient.setQuantity(ingredient.getQuantity() - requiredQuantity); // обновляем кол-во ингредиентов с учетом готовки напитка
             ingredientRepository.save(ingredient);
         }
-        return "Success prepare " + drinkName;
+        return new InfoDTO("Successfully prepared " + drinkName, true);
     }
 
 
     /**
      * Обычно из машины достается предыдущий кейс с ингредиентом и вставляется новый
      */
-    public String updateIngredientQuantity(Ingredient ingredient) {
+    public InfoDTO updateIngredientQuantity(AddIngredientRequest ingredient) {
         Ingredient existingIngredient = ingredientRepository.findByName(ingredient.getName());
         if (existingIngredient == null) {
-            return "Ingredient not found";
+            throw new IngredientNotFoundException(ingredient.getName());
         }
         existingIngredient.setQuantity(ingredient.getQuantity());
         ingredientRepository.save(existingIngredient);
-        return "Ingredient quantity updated";
+        return new InfoDTO("Ingredient quantity updated", true);
     }
 
 
@@ -74,9 +86,16 @@ public class CoffeeMachineService {
      */
     public ReceiptResponse addRecipe(AddReceiptRequest recipeDto) {
         if (recipeRepository.findByName(recipeDto.getName()) != null) {
-            throw new IllegalArgumentException("Рецепт с таким именем уже существует: " + recipeDto.getName());
+            throw new DuplicateNameException("Рецепт с таким именем уже существует: " + recipeDto.getName());
         }
 
+        List<IngredientQuantityDto> ingredients = recipeDto.getIngredients();
+        for (IngredientQuantityDto dto : ingredients) {
+            Ingredient ingredient = ingredientRepository.findByName(dto.getName());
+            if (ingredient == null) {
+                throw new IngredientNotFoundException(dto.getName());
+            }
+        }
         Recipe recipe = toEntity(recipeDto);
         Recipe savedRecipe = recipeRepository.save(recipe);
         return toDto(savedRecipe);
@@ -87,7 +106,7 @@ public class CoffeeMachineService {
      */
     public IngredientResponse addIngredient(AddIngredientRequest ingredientDto) {
         if (ingredientRepository.findByName(ingredientDto.getName()) != null) {
-            throw new IllegalArgumentException("Ингредиент с таким именем уже существует: " + ingredientDto.getName());
+            throw new DuplicateNameException("Ингредиент с таким именем уже существует: " + ingredientDto.getName());
         }
 
         Ingredient ingredient = toEntity(ingredientDto);
@@ -109,6 +128,31 @@ public class CoffeeMachineService {
                 .map(this::toDto)
                 .collect(Collectors.toList());
         return new ReceiptListResponse(receiptResponses, receiptResponses.size());
+    }
+
+    public InfoDTO getMostPopularBeverage() {
+        BeverageStatistics stats = beverageStatisticsRepository.findTopByOrderByCountDesc();
+        if (stats == null) {
+            return new InfoDTO("No statistics available yet", false);
+        }
+
+        return new InfoDTO("Most popular beverage is " + stats.getBeverage().getName() + " with " + stats.getCount() + " orders", true);
+    }
+
+
+    /**
+     * Обновление статистики напитка
+     */
+    private void updateStatistics(Recipe recipe) {
+        BeverageStatistics stats = beverageStatisticsRepository.findByBeverage(recipe);
+        if (stats == null) {
+            stats = new BeverageStatistics();
+            stats.setBeverage(recipe);
+            stats.setCount(1);
+        } else {
+            stats.setCount(stats.getCount() + 1);
+        }
+        beverageStatisticsRepository.save(stats);
     }
 
     // Преобразование RecipeDto в Recipe

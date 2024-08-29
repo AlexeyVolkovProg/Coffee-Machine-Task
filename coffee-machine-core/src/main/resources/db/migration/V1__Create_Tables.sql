@@ -24,3 +24,12 @@ CREATE TABLE IF NOT EXISTS coffee_machine.recipe_ingredients
     FOREIGN KEY (recipe_id) REFERENCES coffee_machine.recipe (id),
     FOREIGN KEY (ingredient_name) REFERENCES coffee_machine.ingredient (name)
 );
+
+-- Создание таблицы BeverageStatistics в схеме coffee_machine
+CREATE TABLE IF NOT EXISTS coffee_machine.beverage_statistics
+(
+    id       SERIAL PRIMARY KEY,
+    beverage_id BIGINT NOT NULL,
+    count    INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (beverage_id) REFERENCES coffee_machine.recipe (id)
+);
