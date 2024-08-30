@@ -13,7 +13,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApiErrorResponse {
+public class ApiErrorResponseDTO {
     @JsonProperty("description")
     private String description;
 

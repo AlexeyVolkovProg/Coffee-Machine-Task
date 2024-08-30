@@ -1,8 +1,8 @@
 package org.example.api;
 
 
-import org.example.dto.request.AddIngredientRequest;
-import org.example.dto.request.AddReceiptRequest;
+import org.example.dto.request.AddIngredientRequestDTO;
+import org.example.dto.request.AddReceiptRequestDTO;
 import org.example.dto.response.*;
 
 public interface CoffeeMachineAPI {
@@ -10,24 +10,24 @@ public interface CoffeeMachineAPI {
     /**
      * Обработка запросов на добавление нового рецепта
      */
-    ReceiptResponse addRecipe(AddReceiptRequest recipeDto);
+    ReceiptResponseDTO addRecipe(AddReceiptRequestDTO recipeDto);
 
     /**
      * Обработка запросов на добавление нового ингредиента
      */
-    IngredientResponse addIngredient(AddIngredientRequest ingredientDto);
+    IngredientResponseDTO addIngredient(AddIngredientRequestDTO ingredientDto);
 
 
     /**
      * Получить список всех доступных рецептов
      */
-    ReceiptListResponse getAllRecipes();
+    ReceiptListResponseDTO getAllRecipes();
 
 
     /**
      * Получить список всех доступных ингредиентов
      */
-    IngredientListResponse getAllIngredients();
+    IngredientListResponseDTO getAllIngredients();
 
 
     /**
@@ -38,7 +38,7 @@ public interface CoffeeMachineAPI {
     /**
      * Обновить какой-то ингредиент
      */
-    InfoDTO updateIngredientQuantity(AddIngredientRequest ingredient);
+    InfoDTO updateIngredientQuantity(AddIngredientRequestDTO ingredient);
 
     /**
      * Получить статистику по самому популярному напитку

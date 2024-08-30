@@ -13,9 +13,9 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReceiptListResponse {
+public class ReceiptListResponseDTO {
     @JsonProperty("recipes")
-    private List<ReceiptResponse> recipes;  // Список рецептов
+    private List<ReceiptResponseDTO> recipes;  // Список рецептов
 
     @JsonProperty("total")
     private int total;  // Общее количество рецептов

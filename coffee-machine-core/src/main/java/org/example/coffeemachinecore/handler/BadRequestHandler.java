@@ -4,7 +4,7 @@ import org.example.coffeemachinecore.exceptions.DuplicateNameException;
 import org.example.coffeemachinecore.exceptions.IngredientNotFoundException;
 import org.example.coffeemachinecore.exceptions.InsufficientIngredientException;
 import org.example.coffeemachinecore.exceptions.RecipeNotFoundException;
-import org.example.dto.error.ApiErrorResponse;
+import org.example.dto.error.ApiErrorResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -20,8 +20,8 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class BadRequestHandler {
 
-    public ResponseEntity<ApiErrorResponse> handleValidationException(Exception ex, String description, HttpStatus status) {
-        ApiErrorResponse response = new ApiErrorResponse(
+    public ResponseEntity<ApiErrorResponseDTO> handleValidationException(Exception ex, String description, HttpStatus status) {
+        ApiErrorResponseDTO response = new ApiErrorResponseDTO(
                 description,
                 status.toString(),
                 ex.getClass().getSimpleName(),
@@ -31,28 +31,28 @@ public class BadRequestHandler {
     }
 
     @ExceptionHandler(RecipeNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleRecipeNotFoundException(RecipeNotFoundException ex) {
+    public ResponseEntity<ApiErrorResponseDTO> handleRecipeNotFoundException(RecipeNotFoundException ex) {
         return handleValidationException(ex, "Рецепт не найден", HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(InsufficientIngredientException.class)
-    public ResponseEntity<ApiErrorResponse> handleInsufficientIngredientException(InsufficientIngredientException ex) {
+    public ResponseEntity<ApiErrorResponseDTO> handleInsufficientIngredientException(InsufficientIngredientException ex) {
         return handleValidationException(ex, "Недостаточно ингредиентов", HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IngredientNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleIngredientNotFoundException(IngredientNotFoundException ex) {
+    public ResponseEntity<ApiErrorResponseDTO> handleIngredientNotFoundException(IngredientNotFoundException ex) {
         return handleValidationException(ex, "Ингредиент не найден", HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(DuplicateNameException.class)
-    public ResponseEntity<ApiErrorResponse> handleDuplicateNameException(DuplicateNameException ex) {
+    public ResponseEntity<ApiErrorResponseDTO> handleDuplicateNameException(DuplicateNameException ex) {
         return handleValidationException(ex, "Элемент с таким именем уже существует", HttpStatus.CONFLICT);
     }
 
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleOtherExceptions(Exception ex) {
+    public ResponseEntity<ApiErrorResponseDTO> handleOtherExceptions(Exception ex) {
         return handleValidationException(ex, "Скорее всего ошибка в формате запроса. Непредвиденное исключение.", HttpStatus.BAD_REQUEST);
     }
 

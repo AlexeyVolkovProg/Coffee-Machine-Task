@@ -10,9 +10,9 @@ import org.example.coffeemachinecore.model.Recipe;
 import org.example.coffeemachinecore.repository.BeverageStatisticsRepository;
 import org.example.coffeemachinecore.repository.IngredientRepository;
 import org.example.coffeemachinecore.repository.RecipeRepository;
-import org.example.dto.request.AddIngredientRequest;
-import org.example.dto.request.AddReceiptRequest;
-import org.example.dto.request.IngredientQuantityDto;
+import org.example.dto.request.AddIngredientRequestDTO;
+import org.example.dto.request.AddReceiptRequestDTO;
+import org.example.dto.request.IngredientQuantityDTO;
 import org.example.dto.response.*;
 import org.springframework.stereotype.Service;
 
@@ -70,7 +70,7 @@ public class CoffeeMachineService {
     /**
      * Обычно из машины достается предыдущий кейс с ингредиентом и вставляется новый
      */
-    public InfoDTO updateIngredientQuantity(AddIngredientRequest ingredient) {
+    public InfoDTO updateIngredientQuantity(AddIngredientRequestDTO ingredient) {
         Ingredient existingIngredient = ingredientRepository.findByName(ingredient.getName());
         if (existingIngredient == null) {
             throw new IngredientNotFoundException(ingredient.getName());
@@ -84,13 +84,13 @@ public class CoffeeMachineService {
     /**
      * Метод добавление рецепта
      */
-    public ReceiptResponse addRecipe(AddReceiptRequest recipeDto) {
+    public ReceiptResponseDTO addRecipe(AddReceiptRequestDTO recipeDto) {
         if (recipeRepository.findByName(recipeDto.getName()) != null) {
             throw new DuplicateNameException("Рецепт с таким именем уже существует: " + recipeDto.getName());
         }
 
-        List<IngredientQuantityDto> ingredients = recipeDto.getIngredients();
-        for (IngredientQuantityDto dto : ingredients) {
+        List<IngredientQuantityDTO> ingredients = recipeDto.getIngredients();
+        for (IngredientQuantityDTO dto : ingredients) {
             Ingredient ingredient = ingredientRepository.findByName(dto.getName());
             if (ingredient == null) {
                 throw new IngredientNotFoundException(dto.getName());
@@ -104,7 +104,7 @@ public class CoffeeMachineService {
     /**
      * Добавление ингредиента
      */
-    public IngredientResponse addIngredient(AddIngredientRequest ingredientDto) {
+    public IngredientResponseDTO addIngredient(AddIngredientRequestDTO ingredientDto) {
         if (ingredientRepository.findByName(ingredientDto.getName()) != null) {
             throw new DuplicateNameException("Ингредиент с таким именем уже существует: " + ingredientDto.getName());
         }
@@ -115,19 +115,19 @@ public class CoffeeMachineService {
     }
 
 
-    public IngredientListResponse getAllIngredients() {
-        List<IngredientResponse> ingredientResponses = ingredientRepository.findAll().stream()
+    public IngredientListResponseDTO getAllIngredients() {
+        List<IngredientResponseDTO> ingredientResponsDTOS = ingredientRepository.findAll().stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
-        return new IngredientListResponse(ingredientResponses, ingredientResponses.size());
+        return new IngredientListResponseDTO(ingredientResponsDTOS, ingredientResponsDTOS.size());
     }
 
     // Новый метод для получения списка всех рецептов с их ингредиентами
-    public ReceiptListResponse getAllRecipes() {
-        List<ReceiptResponse> receiptResponses = recipeRepository.findAll().stream()
+    public ReceiptListResponseDTO getAllRecipes() {
+        List<ReceiptResponseDTO> receiptResponsDTOS = recipeRepository.findAll().stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
-        return new ReceiptListResponse(receiptResponses, receiptResponses.size());
+        return new ReceiptListResponseDTO(receiptResponsDTOS, receiptResponsDTOS.size());
     }
 
     public InfoDTO getMostPopularBeverage() {
@@ -156,19 +156,19 @@ public class CoffeeMachineService {
     }
 
     // Преобразование RecipeDto в Recipe
-    private Recipe toEntity(AddReceiptRequest recipeDto) {
+    private Recipe toEntity(AddReceiptRequestDTO recipeDto) {
         Recipe recipe = new Recipe();
         recipe.setName(recipeDto.getName());
         recipe.setIngredients(recipeDto.getIngredients().stream()
                 .collect(Collectors.toMap(
-                        IngredientQuantityDto::getName,
-                        IngredientQuantityDto::getQuantity
+                        IngredientQuantityDTO::getName,
+                        IngredientQuantityDTO::getQuantity
                 )));
         return recipe;
     }
 
     // Преобразование AddIngredientRequest в Ingredient
-    private Ingredient toEntity(AddIngredientRequest ingredientDto) {
+    private Ingredient toEntity(AddIngredientRequestDTO ingredientDto) {
         Ingredient ingredient = new Ingredient();
         ingredient.setName(ingredientDto.getName());
         ingredient.setQuantity(ingredientDto.getQuantity());
@@ -176,15 +176,15 @@ public class CoffeeMachineService {
     }
 
     // Преобразование Recipe в ReceiptResponse
-    private ReceiptResponse toDto(Recipe recipe) {
-        List<IngredientQuantityDto> ingredients = recipe.getIngredients().entrySet().stream()
-                .map(entry -> new IngredientQuantityDto(entry.getKey(), entry.getValue()))
+    private ReceiptResponseDTO toDto(Recipe recipe) {
+        List<IngredientQuantityDTO> ingredients = recipe.getIngredients().entrySet().stream()
+                .map(entry -> new IngredientQuantityDTO(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
-        return new ReceiptResponse(recipe.getName(), ingredients);
+        return new ReceiptResponseDTO(recipe.getName(), ingredients);
     }
 
     // Преобразование Ingredient в IngredientResponse
-    private IngredientResponse toDto(Ingredient ingredient) {
-        return new IngredientResponse(ingredient.getName(), ingredient.getQuantity());
+    private IngredientResponseDTO toDto(Ingredient ingredient) {
+        return new IngredientResponseDTO(ingredient.getName(), ingredient.getQuantity());
     }
 }

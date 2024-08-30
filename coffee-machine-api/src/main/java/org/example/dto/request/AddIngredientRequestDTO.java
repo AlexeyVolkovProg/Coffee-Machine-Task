@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AddIngredientRequest {
+public class AddIngredientRequestDTO {
     @JsonProperty("name")
     private String name;
 

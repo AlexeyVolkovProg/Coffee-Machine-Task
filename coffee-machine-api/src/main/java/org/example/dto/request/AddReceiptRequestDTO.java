@@ -11,16 +11,16 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AddReceiptRequest {
+public class AddReceiptRequestDTO {
     @JsonProperty("name")
     private String name;  // Название напитка
 
     @JsonProperty("ingredients")
-    private List<IngredientQuantityDto> ingredients;  // Список необходимых ингредиентов и их количество
+    private List<IngredientQuantityDTO> ingredients;  // Список необходимых ингредиентов и их количество
 
     @JsonCreator
-    public AddReceiptRequest(@JsonProperty("name") String name,
-                             @JsonProperty("ingredients") List<IngredientQuantityDto> ingredients) {
+    public AddReceiptRequestDTO(@JsonProperty("name") String name,
+                                @JsonProperty("ingredients") List<IngredientQuantityDTO> ingredients) {
         this.name = name;
         this.ingredients = ingredients;
     }

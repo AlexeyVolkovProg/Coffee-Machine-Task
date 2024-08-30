@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class IngredientQuantityDto {
+public class IngredientQuantityDTO {
 
     @JsonProperty("name")
     private String name; // название ингредиента
@@ -19,7 +19,7 @@ public class IngredientQuantityDto {
     private int quantity; // необходимое количества
 
     @JsonCreator
-    public IngredientQuantityDto(@JsonProperty("name") String name,
+    public IngredientQuantityDTO(@JsonProperty("name") String name,
                                  @JsonProperty("quantity") int quantity) {
         this.name = name;
         this.quantity = quantity;

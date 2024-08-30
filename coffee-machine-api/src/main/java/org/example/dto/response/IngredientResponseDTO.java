@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class IngredientResponse {
+public class IngredientResponseDTO {
     @JsonProperty("name")
     private String name;
 
