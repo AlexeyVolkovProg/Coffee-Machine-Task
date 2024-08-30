@@ -12,7 +12,7 @@ services:
       - "5433:5432"
 
   app:
-    build: coffee-machine-core
+    build: .
     container_name: coffee_machine_app
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db:5432/coffee_machine?currentSchema=coffee_machine
