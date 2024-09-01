@@ -15,10 +15,10 @@ import org.example.dto.request.AddReceiptRequestDTO;
 import org.example.dto.request.IngredientQuantityDTO;
 import org.example.dto.response.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,16 +26,19 @@ public class CoffeeMachineService {
     private final IngredientRepository ingredientRepository;
     private final RecipeRepository recipeRepository;
     private final BeverageStatisticsRepository beverageStatisticsRepository;
+    private final DtoTransformerService dtoTransformer;
 
-    public CoffeeMachineService(IngredientRepository ingredientRepository, RecipeRepository recipeRepository, BeverageStatisticsRepository beverageStatisticsRepository) {
+    public CoffeeMachineService(IngredientRepository ingredientRepository, RecipeRepository recipeRepository, BeverageStatisticsRepository beverageStatisticsRepository, DtoTransformerService dtoTransformer) {
         this.ingredientRepository = ingredientRepository;
         this.recipeRepository = recipeRepository;
         this.beverageStatisticsRepository = beverageStatisticsRepository;
+        this.dtoTransformer = dtoTransformer;
     }
 
     /**
      * Метод приготовления напитка
      */
+    @Transactional
     public InfoDTO prepareDrink(String drinkName) {
         Recipe recipe = recipeRepository.findByName(drinkName)
                 .orElseThrow(() -> new RecipeNotFoundException(drinkName));
@@ -62,6 +65,7 @@ public class CoffeeMachineService {
     /**
      * Обычно из машины достается предыдущий кейс с ингредиентом и вставляется новый
      */
+    @Transactional
     public InfoDTO updateIngredientQuantity(AddIngredientRequestDTO ingredient) {
         Ingredient existingIngredient = ingredientRepository.findByName(ingredient.getName())
                 .orElseThrow(() -> new IngredientNotFoundException(ingredient.getName()));
@@ -74,6 +78,7 @@ public class CoffeeMachineService {
     /**
      * Метод добавление рецепта
      */
+    @Transactional
     public ReceiptResponseDTO addRecipe(AddReceiptRequestDTO recipeDto) {
         if (recipeRepository.findByName(recipeDto.getName()).isPresent()) {
             throw new DuplicateNameException("Рецепт с таким именем уже существует: " + recipeDto.getName());
@@ -84,27 +89,28 @@ public class CoffeeMachineService {
             ingredientRepository.findByName(dto.getName())
                     .orElseThrow(() -> new IngredientNotFoundException(dto.getName()));
         }
-        Recipe recipe = toEntity(recipeDto);
+        Recipe recipe = dtoTransformer.toEntity(recipeDto);;
         Recipe savedRecipe = recipeRepository.save(recipe);
-        return toDto(savedRecipe);
+        return dtoTransformer.toDto(savedRecipe);
     }
 
     /**
      * Добавление ингредиента
      */
+    @Transactional
     public IngredientResponseDTO addIngredient(AddIngredientRequestDTO ingredientDto) {
         if (ingredientRepository.findByName(ingredientDto.getName()).isPresent()) {
             throw new DuplicateNameException("Ингредиент с таким именем уже существует: " + ingredientDto.getName());
         }
 
-        Ingredient ingredient = toEntity(ingredientDto);
+        Ingredient ingredient = dtoTransformer.toEntity(ingredientDto);
         Ingredient savedIngredient = ingredientRepository.save(ingredient);
-        return toDto(savedIngredient);
+        return dtoTransformer.toDto(savedIngredient);
     }
 
     public IngredientListResponseDTO getAllIngredients() {
         List<IngredientResponseDTO> ingredientResponseDTOS = ingredientRepository.findAll().stream()
-                .map(this::toDto)
+                .map(dtoTransformer::toDto)
                 .collect(Collectors.toList());
         return new IngredientListResponseDTO(ingredientResponseDTOS, ingredientResponseDTOS.size());
     }
@@ -112,7 +118,7 @@ public class CoffeeMachineService {
     // Новый метод для получения списка всех рецептов с их ингредиентами
     public ReceiptListResponseDTO getAllRecipes() {
         List<ReceiptResponseDTO> receiptResponseDTOS = recipeRepository.findAll().stream()
-                .map(this::toDto)
+                .map(dtoTransformer::toDto)
                 .collect(Collectors.toList());
         return new ReceiptListResponseDTO(receiptResponseDTOS, receiptResponseDTOS.size());
     }
@@ -145,36 +151,4 @@ public class CoffeeMachineService {
         beverageStatisticsRepository.save(stats);
     }
 
-    // Преобразование RecipeDto в Recipe
-    private Recipe toEntity(AddReceiptRequestDTO recipeDto) {
-        Recipe recipe = new Recipe();
-        recipe.setName(recipeDto.getName());
-        recipe.setIngredients(recipeDto.getIngredients().stream()
-                .collect(Collectors.toMap(
-                        IngredientQuantityDTO::getName,
-                        IngredientQuantityDTO::getQuantity
-                )));
-        return recipe;
-    }
-
-    // Преобразование AddIngredientRequest в Ingredient
-    private Ingredient toEntity(AddIngredientRequestDTO ingredientDto) {
-        Ingredient ingredient = new Ingredient();
-        ingredient.setName(ingredientDto.getName());
-        ingredient.setQuantity(ingredientDto.getQuantity());
-        return ingredient;
-    }
-
-    // Преобразование Recipe в ReceiptResponse
-    private ReceiptResponseDTO toDto(Recipe recipe) {
-        List<IngredientQuantityDTO> ingredients = recipe.getIngredients().entrySet().stream()
-                .map(entry -> new IngredientQuantityDTO(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
-        return new ReceiptResponseDTO(recipe.getName(), ingredients);
-    }
-
-    // Преобразование Ingredient в IngredientResponse
-    private IngredientResponseDTO toDto(Ingredient ingredient) {
-        return new IngredientResponseDTO(ingredient.getName(), ingredient.getQuantity());
-    }
 }
